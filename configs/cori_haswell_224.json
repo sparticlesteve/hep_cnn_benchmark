@@ -10,6 +10,7 @@
     "save_interval": 1,
     "learning_rate": 1e-3,
     "dropout_p": 0.5,
+    "optimizer": "ADAM",
     "weight_decay": 1e-2,
     "num_layers": 4,
     "momentum": 0.9,
