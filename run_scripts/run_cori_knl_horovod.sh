@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH -q premium
-#SBATCH -A nstaff
 #SBATCH -C knl
 #SBATCH -t 1:00:00
 #SBATCH -J hep_train_tf

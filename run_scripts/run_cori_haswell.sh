@@ -1,6 +1,5 @@
 #!/bin/bash
-#SBATCH -p regular
-#SBATCH -A nstaff
+#SBATCH -q regular
 #SBATCH -C haswell
 #SBATCH -t 1:00:00
 #SBATCH -J hep_train_tf
