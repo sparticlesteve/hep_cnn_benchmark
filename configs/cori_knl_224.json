@@ -14,6 +14,7 @@
     "weight_decay": 1e-2,
     "fully_sync_fraction": 0.0,
     "num_layers": 4,
+    "num_fc_units": 512,
     "momentum": 0.9,
     "num_epochs": 200,
     "train_batch_size": 128,
