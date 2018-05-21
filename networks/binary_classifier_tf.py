@@ -242,7 +242,7 @@ def build_cnn_model(args):
         for layerid in range(1, args['num_layers'] + 1):
         
             #create weight-variable
-            conv_weight_name = 'conv%i_w' % str(layerid)
+            conv_weight_name = 'conv%i_w' % layerid
             variables[conv_weight_name] = tf.Variable(
                 initializer([ksize, ksize, prev_num_filters, num_filters], dtype=dtype),
                 name=conv_weight_name, dtype=dtype)
