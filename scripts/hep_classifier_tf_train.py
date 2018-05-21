@@ -1,4 +1,7 @@
 # System imports
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 import os
 import sys
 import json
@@ -367,7 +370,7 @@ if (args['node_type'] == 'worker'):
             # global step that either gets updated after any node processes a batch (async)
             # or when all nodes process a batch for a given iteration (sync)
             global_step = tf.train.get_or_create_global_step()
-            #opt = args['opt_func'](**args['opt_args'])
+            opt = args['opt_func'](**args['opt_args'])
             #optlist = []
             #if args['optimizer'] == 'KFAC':
             #    optlist = [opt.cov_update_op, opt.inv_update_op]
