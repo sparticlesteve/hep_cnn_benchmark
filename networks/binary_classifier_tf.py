@@ -41,8 +41,6 @@
 #-------------------------------------------------------------------------------
 
 
-# In[1]:
-
 #os stuff
 import os
 import h5py as h5
@@ -56,12 +54,9 @@ import tensorflow as tf
 import tensorflow.contrib.keras as tfk
 
 
-# # General Functions
+# General Functions
 
-# ## Input Handler
-
-# In[3]:
-
+# Input Handler
 class DataSet(object):
     
     def reset(self):
@@ -208,10 +203,7 @@ class DataSet(object):
         return images, labels, normweights, weights, psr
 
 
-# ## Dummy handler
-
-# In[ ]:
-
+# Dummy handler
 class DummySet(object):
     
     def reset(self):
@@ -242,9 +234,7 @@ class DummySet(object):
         return data, labels, normweights, weights, psr
 
 
-# ## HEP CNN Model
-
-# In[4]:
+# HEP CNN Model
 
 def build_cnn_model(args):
     
@@ -480,8 +470,6 @@ def build_cnn_model(args):
 
 # # Build Functions from the Network Output
 
-# In[ ]:
-
 #build the functions
 def build_functions(args,variables,network):
     
@@ -516,4 +504,3 @@ def build_functions(args,variables,network):
     
     #return functions
     return variables, prediction, loss, accuracy, auc
-
