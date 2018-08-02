@@ -492,7 +492,7 @@ if (args['node_type'] == 'worker'):
         
             print("Rank",args["task_index"],": starting training using "+args['optimizer']+" optimizer")
             with tf.train.MonitoredTrainingSession(config=sess_config, 
-                                                   checkpoint_dir=(args['modelpath'] if + mc.get_rank() == 0 else None),
+                                                   checkpoint_dir=(args['modelpath'] if mc.get_rank() == 0 else None),
                                                    save_checkpoint_secs=300,
                                                    hooks=hooks) as sess:
     
