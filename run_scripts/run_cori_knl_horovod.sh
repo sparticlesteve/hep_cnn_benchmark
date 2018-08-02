@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -q premium
+#SBATCH -q debug
 #SBATCH -C knl
-#SBATCH -t 1:00:00
+#SBATCH -t 30:00
 #SBATCH -J hep_train_tf
 
 #*** License Agreement ***
@@ -48,7 +48,7 @@
 
 
 # Environment
-module load tensorflow/intel-1.8.0-py27
+module load tensorflow/intel-1.6.0-py27
 export PYTHONPATH=$PWD:$PYTHONPATH
 
 # Run
