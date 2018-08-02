@@ -88,9 +88,10 @@ class DataSet(object):
                     self._weights = f['weight'][start:end]
                     self._psr = f['psr'][start:end]
                     f.close()
-            except EnvironmentError:
-                raise EnvironmentError("Cannot open file "+self._filelist[self._file_index])
-                
+            except EnvironmentError as e:
+                print('Cannot open file', self._filelist[self._file_index])
+                raise e
+
             #sanity checks
             assert self._images.shape[0] == self._labels.shape[0], ('images.shape: %s labels.shape: %s' % (self._images.shape, self_.labels.shape))
             assert self._labels.shape[0] == self._normweights.shape[0], ('labels.shape: %s normweights.shape: %s' % (self._labels.shape, self._normweights.shape))
