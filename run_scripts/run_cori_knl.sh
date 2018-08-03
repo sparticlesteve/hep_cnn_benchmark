@@ -48,7 +48,7 @@
 
 
 # Set up environment
-module load tensorflow/intel-1.8.0-py27
+module load tensorflow/intel-1.6.0-py27
 export PYTHONPATH=$PWD:$PYTHONPATH
 
 # Configure number of parameter servers
