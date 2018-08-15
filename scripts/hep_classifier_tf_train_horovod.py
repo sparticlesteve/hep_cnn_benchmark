@@ -452,7 +452,7 @@ if (args['node_type'] == 'worker'):
                 sess.run([init_global_op, init_local_op])
         
                 #do the training loop
-                total_time = time.time()
+                start_time = time.time()
                 train_loop(sess,train_step,global_step,optlist,args,trainset,validationset)
-                total_time -= time.time()
+                total_time = time.time() - start_time
                 print("FINISHED Training. Total time %g"%(total_time))
