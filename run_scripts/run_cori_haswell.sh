@@ -48,7 +48,7 @@
 
 
 # Set up environment
-module load tensorflow/intel-1.6.0-py27
+module load tensorflow/intel-1.6.0-py36
 export PYTHONPATH=$PWD:$PYTHONPATH
 
 # Configuration

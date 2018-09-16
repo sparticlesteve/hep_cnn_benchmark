@@ -176,7 +176,8 @@ class BcastTensors(tf.train.SessionRunHook):
 
 # END CRAY ADDED
 
-def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,validationset):
+def train_loop(sess, bcast_hook, train_step, global_step, optlist, args,
+               trainset, validationset):
     
     #counter stuff
     trainset.reset()
@@ -200,6 +201,7 @@ def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,vali
     train_batches=0
     total_batches=0
     train_time=0
+    total_train_time = 0
     
     #do training
     while not sess.should_stop():
@@ -232,7 +234,9 @@ def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,vali
         
         
         end_time = time.time()
-        train_time += end_time-start_time
+        batch_time = end_time - start_time
+        train_time += batch_time
+        total_train_time += batch_time
         
         #increment train loss and batch number
         train_loss += tmp_loss
@@ -309,6 +313,9 @@ def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,vali
             print(time.time(),"COMPLETED epoch %d, average validation accu %g"%(epochs_completed, validation_accuracy))
             validation_auc = sess.run(auc_fn[0])
             print(time.time(),"COMPLETED epoch %d, average validation auc %g"%(epochs_completed, validation_auc))
+        #
+    #
+    return dict(train_time=total_train_time)
 
 
 # Parse Parameters
@@ -348,10 +355,16 @@ else:
 # On-Node Stuff
 
 if (args['node_type'] == 'worker'):
+
+    if args['task_index'] == 0:
+        print('NRANKS', mc.get_nranks())
+
     #common stuff
     os.environ["KMP_BLOCKTIME"] = "1"
-    os.environ["KMP_SETTINGS"] = "1"
     os.environ["KMP_AFFINITY"]= "granularity=fine,compact,1,0"
+    # Only need to print the OMP settings on one rank
+    if args['task_index'] == 0:
+        os.environ["KMP_SETTINGS"] = "1"
 
     #arch-specific stuff
     if args['arch']=='hsw':
@@ -393,8 +406,8 @@ if args['node_type'] == 'worker':
         #tf.add_to_collection('pred_fn', pred_fn)
         #tf.add_to_collection('loss_fn', loss_fn)
         #tf.add_to_collection('accuracy_fn', accuracy_fn[0])
-        print("Variables for rank",args["task_index"],":",variables)
-        print("Network for rank",args["task_index"],":",network)
+        #print("Variables for rank",args["task_index"],":",variables)
+        #print("Network for rank",args["task_index"],":",network)
 
 
 # Setup Iterators
@@ -418,14 +431,15 @@ if args['node_type'] == 'worker':
         validationset = bc.DummySet(input_shape=args['input_shape'], samples_per_epoch=1000, task_index=args['task_index'])
     
 #Determine stopping point, i.e. compute last_step:
-args["last_step"] = int(args["trainsamples"] * args["num_epochs"] / (args["train_batch_size_per_node"] * args["num_workers"]))
+args["last_step"] = int(args["trainsamples"] * args["num_epochs"] /
+                        (args["train_batch_size_per_node"] * args["num_workers"]))
 
 #config the stopping criterion
-mc.config_team(0, 0, ksteps=np.max([int(args["fully_sync_fraction"]*args["last_step"]), 1]), 
+mc.config_team(0, 0, ksteps=max([int(args["fully_sync_fraction"]*args["last_step"]), 1]), 
                max_steps=args["last_step"], verbosity=0, perf_freq=200)
 
 #print info
-print("Stopping after %d global steps"%(args["last_step"]))
+print("Stopping after %d global steps" % args["last_step"])
 
 
 # Train Model
@@ -495,15 +509,24 @@ if (args['node_type'] == 'worker'):
                                                    checkpoint_dir=(args['modelpath'] if mc.get_rank() == 0 else None),
                                                    save_checkpoint_secs=300,
                                                    hooks=hooks) as sess:
-    
+
                 #initialize variables
                 sess.run([init_global_op, init_local_op])
-        
+
                 #do the training loop
                 start_time = time.time()
-                train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,validationset)
+                results = train_loop(sess, bcast_hook, train_step, global_step,
+                                     optlist, args, trainset, validationset)
                 total_time = time.time() - start_time
-                print("FINISHED Training. Total time %g"%(total_time))
-                
+
+                # Compute sample rate
+                n_task_train_samples = args["trainsamples"] * args["num_epochs"] // args["num_workers"]
+                train_rate = n_task_train_samples / results['train_time']
+
+                #print('num task samples', n_task_train_samples)
+                #print('train time', results['train_time'])
+                print("FINISHED Training. Total time: %g Train time: %g Train samples: %g Train rate: %g" %
+                      (total_time, results['train_time'], n_task_train_samples, train_rate))
+
                 #clean up comm buffers
                 mc.finalize()

@@ -48,9 +48,9 @@
 
 
 # Environment setup
-module load tensorflow/intel-1.6.0-py27
+module load tensorflow/intel-1.6.0-py36
 module use /global/cscratch1/sd/pjm/tmp_inst/modulefiles
-module load craype-ml-plugin-py2/1.1.2
+module load craype-ml-plugin-py3/1.1.2
 export HDF5_USE_FILE_LOCKING=FALSE
 export PYTHONPATH=$PWD:$PYTHONPATH
 
