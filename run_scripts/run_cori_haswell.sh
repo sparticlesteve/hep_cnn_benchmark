@@ -49,6 +49,7 @@
 
 # Set up environment
 module load tensorflow/intel-1.6.0-py36
+export HDF5_USE_FILE_LOCKING=FALSE
 export PYTHONPATH=$PWD:$PYTHONPATH
 
 # Configuration
