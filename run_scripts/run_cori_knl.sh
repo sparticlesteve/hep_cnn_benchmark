@@ -76,7 +76,7 @@ fi
 
 # Run the training
 set -x
-srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} -c 272 -u \
+srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} -c 272 -u -l \
     python scripts/hep_classifier_tf_train.py \
     --config=configs/cori_knl_224.json \
     --num_tasks=${SLURM_NNODES} \

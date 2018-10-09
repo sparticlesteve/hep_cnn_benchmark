@@ -58,7 +58,7 @@ if [ ! -z ${SLURM_NNODES} ]; then
     if [ ${SLURM_NNODES} -ge 2 ]; then
 	NUM_PS=1
     fi
-    runcommand="srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} -c 64 -u"
+    runcommand="srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} -c 64 -u -l"
 else
     SLURM_NNODES=1
     runcommand=""
