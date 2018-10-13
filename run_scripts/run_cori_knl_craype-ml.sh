@@ -54,12 +54,8 @@ module load craype-ml-plugin-py3/1.1.2
 export HDF5_USE_FILE_LOCKING=FALSE
 export PYTHONPATH=$PWD:$PYTHONPATH
 
-# Binding settings
-#bindstring="numactl -C 1-67,69-135,137-203,205-271"
-bindstring=""
-
 # Run the training
-srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} -c 272 -u -l ${bindstring} \
+srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} -c 272 -u -l \
     python scripts/hep_classifier_tf_train_craype-ml.py \
     --config=configs/cori_knl_224.json \
     --num_tasks=${SLURM_NNODES}
