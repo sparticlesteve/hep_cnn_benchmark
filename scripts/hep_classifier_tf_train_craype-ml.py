@@ -45,44 +45,32 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-#os stuff
+# System
 import os
 import sys
-import h5py as h5
 import re
 import json
-
-#argument parsing
 import argparse
-
-#timing
 import time
 
-#numpy
+# Externals
+import h5py as h5
 import numpy as np
-
-#tensorflow
 import tensorflow as tf
 import tensorflow.contrib.keras as tfk
-
-#import cray plugin
 import ml_comm as mc
-import math
 
-#slurm helpers
+# Locals
 import slurm_tf_helper.setup_clusters as sc
-
-#housekeeping
 import networks.binary_classifier_tf as bc
 
 #debugging
 #tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 
 
-#initialize with buffer big enough to hold model. 5MB should be enough for everybody
-#mc.init(1, 1, 5*1024*1024, "tensorflow")
+# Initialize Cray plugin with buffer big enough to hold model.
+# 5MB should be enough for everybody.
 mc.init(1, 2, 5*1024*1024, "tensorflow")
-
 
 # Useful Functions
 
@@ -161,14 +149,14 @@ class BcastTensors(tf.train.SessionRunHook):
         if not self.bcast:
             new_vars   = mc.broadcast(tf.trainable_variables(),0)
             self.bcast = tf.group(*[tf.assign(v,new_vars[k]) for k,v in enumerate(tf.trainable_variables())])
-    
+
     def validate(self, session):
         py_all_vars = [session.run(v) for v in tf.trainable_variables()]
         if (mc.check_buffers_match(py_all_vars,1) != 0):
             raise ValueError("ERROR: not all processes have the same initial model!")
         else:
             print("Initial model is consistent on all ranks")
-    
+
     def after_create_session(self, session, coord, validate_init=True):
         session.run(self.bcast)
         if validate_init:
@@ -177,7 +165,7 @@ class BcastTensors(tf.train.SessionRunHook):
 # END CRAY ADDED
 
 def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,validationset):
-    
+
     #counter stuff
     trainset.reset()
     validationset.reset()
@@ -200,7 +188,7 @@ def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,vali
     train_batches=0
     total_batches=0
     train_time=0
-    
+
     #do training
     while not sess.should_stop():
 
@@ -233,7 +221,7 @@ def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,vali
 
         end_time = time.time()
         train_time += end_time-start_time
-        
+
         #increment train loss and batch number
         train_loss += tmp_loss
         train_batches += 1
@@ -247,7 +235,7 @@ def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,vali
         #check if epoch is done
         if trainset._epochs_completed>epochs_completed:
             epochs_completed=trainset._epochs_completed
-            print(time.time(),"COMPLETED rank",args["task_index"],"epoch %d, average training loss %g (%.3f sec/batch)"%(epochs_completed, 
+            print(time.time(),"COMPLETED rank",args["task_index"],"epoch %d, average training loss %g (%.3f sec/batch)"%(epochs_completed,
                                                                                  train_loss/float(train_batches),
                                                                                  train_time/float(train_batches)))
 
@@ -302,7 +290,7 @@ def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,vali
                 if validationset._epochs_completed>0:
                     validationset.reset()
                     break
-                    
+
             print(time.time(),"COMPLETED epoch %d, average validation loss %g"%(epochs_completed, validation_loss/float(validation_batches)))
             validation_accuracy = sess.run(accuracy_fn[0])
             print(time.time(),"COMPLETED epoch %d, average validation accu %g"%(epochs_completed, validation_accuracy))
@@ -334,7 +322,7 @@ else:
     args['is_chief']=True
     args['target']=''
     args['hot_spares']=0
-    
+
 #general stuff
 if not args["batch_size_per_node"]:
     args["train_batch_size_per_node"]=int(args["train_batch_size"]/float(args["num_workers"]))
@@ -400,7 +388,7 @@ if args['node_type'] == 'worker':
 
 if args['node_type'] == 'worker':
     print("Rank",args["task_index"],":","Setting up iterators")
-    
+
     trainset=None
     validationset=None
     if not args['dummy_data']:
@@ -487,22 +475,22 @@ if (args['node_type'] == 'worker'):
 
             #saver class:
             model_saver = tf.train.Saver()
-        
-        
+
+
             print("Rank",args["task_index"],": starting training using "+args['optimizer']+" optimizer")
-            with tf.train.MonitoredTrainingSession(config=sess_config, 
+            with tf.train.MonitoredTrainingSession(config=sess_config,
                                                    checkpoint_dir=(args['modelpath'] if mc.get_rank() == 0 else None),
                                                    save_checkpoint_secs=300,
                                                    hooks=hooks) as sess:
-    
+
                 #initialize variables
                 sess.run([init_global_op, init_local_op])
-        
+
                 #do the training loop
                 start_time = time.time()
                 train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,validationset)
                 total_time = time.time() - start_time
                 print("FINISHED Training. Total time %g"%(total_time))
-                
+
                 #clean up comm buffers
                 mc.finalize()

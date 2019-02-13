@@ -38,37 +38,29 @@
 # royalty-free perpetual license to install, use, modify, prepare derivative
 # works, incorporate into other computer software, distribute, and sublicense
 # such enhancements or derivative works thereof, in binary and source code form.
-#---------------------------------------------------------------      
+#---------------------------------------------------------------
 
 # Compatibility
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-#os stuff
+# System
 import os
 import sys
-import h5py as h5
 import re
 import json
-
-#argument parsing
 import argparse
-
-#timing
 import time
 
-#numpy
+# Externals
+import h5py as h5
 import numpy as np
-
-#tensorflow
 import tensorflow as tf
 import tensorflow.contrib.keras as tfk
 
-#slurm helpers
+# Locals
 import slurm_tf_helper.setup_clusters as sc
-
-#housekeeping
 import networks.binary_classifier_tf as bc
 
 # Useful Functions
@@ -79,31 +71,31 @@ def parse_arguments():
     parser.add_argument("--num_tasks", type=int, default=1, help="specify the number of tasks")
     parser.add_argument("--num_ps", type=int, default=0, help="specify the number of parameters servers")
     parser.add_argument("--precision", type=str, default="fp32", help="specify the precision. supported are fp32 and fp16")
-    parser.add_argument('--dummy_data', action='store_const', const=True, default=False, 
+    parser.add_argument('--dummy_data', action='store_const', const=True, default=False,
                         help='use dummy data instead of real data')
     pargs = parser.parse_args()
-    
+
     #load the json:
     with open(pargs.config,"r") as f:
         args = json.load(f)
-    
+
     #set the rest
     args['num_tasks'] = pargs.num_tasks
     args['num_ps'] = pargs.num_ps
     args['dummy_data'] = pargs.dummy_data
-    
+
     #modify the activations
     if args['conv_params']['activation'] == 'ReLU':
         args['conv_params']['activation'] = tf.nn.relu
     else:
         raise ValueError('Only ReLU is supported as activation')
-        
+
     #modify the initializers
     if args['conv_params']['initializer'] == 'HE':
         args['conv_params']['initializer'] = tfk.initializers.he_normal()
     else:
         raise ValueError('Only ReLU is supported as initializer')
-        
+
     #modify the optimizers
     args['opt_args'] = {"learning_rate": args['learning_rate']}
     if args['optimizer'] == 'KFAC':
@@ -115,11 +107,11 @@ def parse_arguments():
         args['opt_func'] = tf.train.AdamOptimizer
     else:
         raise ValueError('Only ADAM and KFAC are supported as optimizers')
-    
+
     #now, see if all the paths are there
     args['logpath'] = args['outputpath']+'/logs'
     args['modelpath'] = args['outputpath']+'/models'
-    
+
     if not os.path.isdir(args['logpath']):
         print("Creating log directory ",args['logpath'])
         os.makedirs(args['logpath'])
@@ -128,94 +120,94 @@ def parse_arguments():
         os.makedirs(args['modelpath'])
     if not os.path.isdir(args['inputpath']) and not args['dummy_data']:
         raise ValueError("Please specify a valid path with input files in hdf5 format")
-    
+
     #precision:
     args['precision'] = tf.float32
     if pargs.precision == "fp16":
         args['precision'] = tf.float16
-    
+
     return args
 
 
 def train_loop(sess,train_step,global_step,optlist,args,trainset,validationset):
-    
+
     #counter stuff
     trainset.reset()
     validationset.reset()
-    
+
     #restore weights belonging to graph
     epochs_completed = 0
     if not args['restart']:
         last_model = tf.train.latest_checkpoint(args['modelpath'])
         print("Restoring model %s.",last_model)
         model_saver.restore(sess,last_model)
-    
+
     #losses
     train_loss=0.
     train_batches=0
     total_batches=0
     train_time=0
-    
+
     #do training
     while not sess.should_stop():
-        
+
         #increment total batch counter
         total_batches+=1
-        
+
         #get next batch
         images,labels,normweights,_,_ = trainset.next_batch(args['train_batch_size_per_node'])
         #set weights to zero
         normweights[:] = 1.
         #set up feed dict:
-        feed_dict={variables['images_']: images, 
-                    variables['labels_']: labels, 
-                    variables['weights_']: normweights, 
+        feed_dict={variables['images_']: images,
+                    variables['labels_']: labels,
+                    variables['weights_']: normweights,
                     variables['keep_prob_']: args['dropout_p']}
-                
+
         #update weights
         start_time = time.time()
         if args['create_summary']:
             _, gstep, summary, tmp_loss = sess.run([train_step, global_step, train_summary, loss_fn], feed_dict=feed_dict)
         else:
             _, gstep, tmp_loss = sess.run([train_step, global_step, loss_fn], feed_dict=feed_dict)
-        
+
         #update kfac parameters
         if optlist:
             sess.run(optlist[0],feed_dict=feed_dict)
             if gstep%args["kfac_inv_update_frequency"]==0:
                 sess.run(optlist[1],feed_dict=feed_dict)
-        
-        
+
+
         end_time = time.time()
         train_time += end_time-start_time
-        
+
         #increment train loss and batch number
         train_loss += tmp_loss
         train_batches += 1
-        
+
         #determine if we give a short update:
         if gstep%args['display_interval']==0:
             print(time.time(),"REPORT rank",args["task_index"],"global step %d., average training loss %g (%.3f sec/batch)"%(gstep,
                                                                                 train_loss/float(train_batches),
                                                                                 train_time/float(train_batches)))
-        
+
         #check if epoch is done
         if trainset._epochs_completed>epochs_completed:
             epochs_completed=trainset._epochs_completed
-            print(time.time(),"COMPLETED rank",args["task_index"],"epoch %d, average training loss %g (%.3f sec/batch)"%(epochs_completed, 
+            print(time.time(),"COMPLETED rank",args["task_index"],"epoch %d, average training loss %g (%.3f sec/batch)"%(epochs_completed,
                                                                                  train_loss/float(train_batches),
                                                                                  train_time/float(train_batches)))
-            
+
             #reset counters
             train_loss=0.
             train_batches=0
             train_time=0
-            
+
             #compute validation loss:
             #reset variables
             validation_loss=0.
             validation_batches=0
-            
+
             #iterate over batches
             while True:
                 #get next batch
@@ -223,42 +215,42 @@ def train_loop(sess,train_step,global_step,optlist,args,trainset,validationset):
                 #set weights to 1:
                 normweights[:] = 1.
                 weights[:] = 1.
-                
+
                 #compute loss
                 if args['create_summary']:
                     summary, tmp_loss=sess.run([validation_summary,loss_fn],
-                                                feed_dict={variables['images_']: images, 
-                                                            variables['labels_']: labels, 
-                                                            variables['weights_']: normweights, 
+                                                feed_dict={variables['images_']: images,
+                                                            variables['labels_']: labels,
+                                                            variables['weights_']: normweights,
                                                             variables['keep_prob_']: 1.0})
                 else:
                     tmp_loss=sess.run([loss_fn],
-                                    feed_dict={variables['images_']: images, 
-                                                variables['labels_']: labels, 
-                                                variables['weights_']: normweights, 
+                                    feed_dict={variables['images_']: images,
+                                                variables['labels_']: labels,
+                                                variables['weights_']: normweights,
                                                 variables['keep_prob_']: 1.0})
-                
+
                 #add loss
                 validation_loss += tmp_loss[0]
                 validation_batches += 1
-                
+
                 #update accuracy
-                sess.run(accuracy_fn[1],feed_dict={variables['images_']: images, 
-                                                    variables['labels_']: labels, 
-                                                    variables['weights_']: normweights, 
+                sess.run(accuracy_fn[1],feed_dict={variables['images_']: images,
+                                                    variables['labels_']: labels,
+                                                    variables['weights_']: normweights,
                                                     variables['keep_prob_']: 1.0})
-                
+
                 #update auc
-                sess.run(auc_fn[1],feed_dict={variables['images_']: images, 
-                                              variables['labels_']: labels, 
-                                              variables['weights_']: normweights, 
+                sess.run(auc_fn[1],feed_dict={variables['images_']: images,
+                                              variables['labels_']: labels,
+                                              variables['weights_']: normweights,
                                               variables['keep_prob_']: 1.0})
-                                
+
                 #check if full pass done
                 if validationset._epochs_completed>0:
                     validationset.reset()
                     break
-                    
+
             print(time.time(),"COMPLETED epoch %d, average validation loss %g"%(epochs_completed, validation_loss/float(validation_batches)))
             validation_accuracy = sess.run(accuracy_fn[0])
             print(time.time(),"COMPLETED epoch %d, average validation accu %g"%(epochs_completed, validation_accuracy))
@@ -275,7 +267,7 @@ args = parse_arguments()
 
 #decide who will be worker and who will be parameters server
 if args['num_tasks'] > 1:
-    args['cluster'], args['server'], args['task_index'], args['num_workers'], args['node_type'] = sc.setup_slurm_cluster(num_ps=args['num_ps'])    
+    args['cluster'], args['server'], args['task_index'], args['num_workers'], args['node_type'] = sc.setup_slurm_cluster(num_ps=args['num_ps'])
     if args['node_type'] == "ps":
         args['server'].join()
     elif args['node_type'] == "worker":
@@ -292,7 +284,7 @@ else:
     args['is_chief']=True
     args['target']=''
     args['hot_spares']=0
-    
+
 #general stuff
 if not args["batch_size_per_node"]:
     args["train_batch_size_per_node"]=int(args["train_batch_size"]/float(args["num_workers"]))
@@ -338,10 +330,10 @@ if (args['node_type'] == 'worker'):
 # Build Network and Functions
 
 if args['node_type'] == 'worker':
-    print("Rank",args["task_index"],":","Building model") 
+    print("Rank",args["task_index"],":","Building model")
     args['device'] = tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % args['task_index'],
                                                     cluster=args['cluster'])
-        
+
     with tf.device(args['device']):
         variables, network = bc.build_cnn_model(args)
         variables, pred_fn, loss_fn, accuracy_fn, auc_fn = bc.build_functions(args,variables,network)
@@ -357,14 +349,14 @@ if args['node_type'] == 'worker':
 
 if args['node_type'] == 'worker':
     print("Rank",args["task_index"],":","Setting up iterators")
-    
+
     trainset=None
     validationset=None
     if not args['dummy_data']:
         #training files
         trainfiles = [args['inputpath']+'/'+x for x in os.listdir(args['inputpath']) if 'train' in x and (x.endswith('.h5') or x.endswith('.hdf5'))]
         trainset = bc.DataSet(trainfiles,args['num_workers'],args['task_index'],split_filelist=True,split_file=False,data_format=args["conv_params"]['data_format'])
-    
+
         #validation files
         validationfiles = [args['inputpath']+'/'+x for x in os.listdir(args['inputpath']) if 'val' in x and (x.endswith('.h5') or x.endswith('.hdf5'))]
         validationset = bc.DataSet(validationfiles,args['num_workers'],args['task_index'],split_filelist=True,split_file=False,data_format=args["conv_params"]['data_format'])
@@ -372,7 +364,7 @@ if args['node_type'] == 'worker':
         #training files and validation files are just dummy sets then
         trainset = bc.DummySet(input_shape=args['input_shape'], samples_per_epoch=10000, task_index=args['task_index'])
         validationset = bc.DummySet(input_shape=args['input_shape'], samples_per_epoch=1000, task_index=args['task_index'])
-    
+
 #Determine stopping point, i.e. compute last_step:
 args["last_step"] = int(args["trainsamples"] * args["num_epochs"] / (args["train_batch_size_per_node"] * args["num_workers"]))
 print("Stopping after %d global steps"%(args["last_step"]))
@@ -389,37 +381,37 @@ if not metafilelist:
 
 #initialize session
 if (args['node_type'] == 'worker'):
-    
+
     #use default graph
     with args['graph'].as_default():
-    
+
         #a hook that will stop training at a certain number of steps
         hooks=[tf.train.StopAtStepHook(last_step=args["last_step"])]
-    
+
         with tf.device(args['device']):
-        
+
             #global step that either gets updated after any node processes a batch (async) or when all nodes process a batch for a given iteration (sync)
             global_step = tf.train.get_or_create_global_step()
             opt = args['opt_func'](**args['opt_args'])
             optlist = []
             if args["optimizer"] == "KFAC":
                 optlist = [opt.cov_update_op, opt.inv_update_op]
-        
+
             #decide whether we want to do sync or async training
             if args['mode'] == "sync" and args['num_tasks'] > 1:
                 print("Rank",args["task_index"],"performing synchronous updates")
                 #if sync we make a data structure that will aggregate the gradients form all tasks (one task per node in thsi case)
-                opt = tf.train.SyncReplicasOptimizer(opt, 
+                opt = tf.train.SyncReplicasOptimizer(opt,
                                                      replicas_to_aggregate=args['num_workers']-args['num_hot_spares'],
                                                      total_num_replicas=args['num_workers'],
                                                      use_locking=True)
                 hooks.append(opt.make_session_run_hook(args['is_chief']))
             else:
                 print("Rank",args["task_index"],"performing asynchronous updates")
-            
+
             #create train step handle
             train_step = opt.minimize(loss_fn, global_step=global_step)
-            
+
             #creating summary
             if args['create_summary']:
                 #var_summary = []
@@ -429,26 +421,26 @@ if (args['node_type'] == 'worker'):
                 train_summary = tf.summary.merge([summary_loss])
                 hooks.append(tf.train.StepCounterHook(every_n_steps=100,output_dir=args['logpath']))
                 hooks.append(tf.train.SummarySaverHook(save_steps=100,output_dir=args['logpath'],summary_op=train_summary))
-            
+
             # Add an op to initialize the variables.
             init_global_op = tf.global_variables_initializer()
             init_local_op = tf.local_variables_initializer()
-        
+
             #saver class:
             model_saver = tf.train.Saver()
-        
-        
+
+
             print("Rank",args["task_index"],": starting training using "+args['optimizer']+" optimizer")
-            with tf.train.MonitoredTrainingSession(config=sess_config, 
+            with tf.train.MonitoredTrainingSession(config=sess_config,
                                                    is_chief=args["is_chief"],
                                                    master=args['target'],
                                                    checkpoint_dir=args['modelpath'],
                                                    save_checkpoint_secs=300,
                                                    hooks=hooks) as sess:
-    
+
                 #initialize variables
                 sess.run([init_global_op, init_local_op])
-        
+
                 #do the training loop
                 start_time = time.time()
                 train_loop(sess,train_step,global_step,optlist,args,trainset,validationset)
