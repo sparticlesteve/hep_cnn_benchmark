@@ -138,7 +138,7 @@ def train_loop(sess,train_step,global_step,optlist,args,trainset,validationset):
 
     #restore weights belonging to graph
     epochs_completed = 0
-    if not args['restart']:
+    if args['resume']:
         last_model = tf.train.latest_checkpoint(args['modelpath'])
         print("Restoring model %s.",last_model)
         model_saver.restore(sess,last_model)
@@ -373,7 +373,7 @@ print("Stopping after %d global steps"%(args["last_step"]))
 metafilelist = [args['modelpath']+'/'+x for x in os.listdir(args['modelpath']) if x.endswith('.meta')]
 if not metafilelist:
     #no model found, restart from scratch
-    args['restart']=True
+    args['resume'] = False
 
 
 #initialize session

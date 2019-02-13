@@ -21,7 +21,7 @@
     "scaling_improvements": true,
     "time": true,
     "create_summary": false,
-    "restart": false,
+    "resume": false,
     "conv_params": { 
         "data_format": "NHWC", 
         "num_filters": 128, 

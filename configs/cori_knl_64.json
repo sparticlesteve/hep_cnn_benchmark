@@ -22,7 +22,7 @@
     "scaling_improvements": false,
     "time": true,
     "create_summary": false,
-    "restart": false,
+    "resume": false,
     "conv_params": { 
         "data_format": "NCHW", 
         "num_filters": 128, 

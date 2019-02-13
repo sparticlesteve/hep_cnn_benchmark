@@ -166,11 +166,10 @@ def train_loop(sess,bcast_hook,train_step,global_step,optlist,args,trainset,vali
 
     #restore weights belonging to graph
     epochs_completed = 0
-    #Buggy, needs fixing!!!
-    #if not args['restart']:
-    #    last_model = tf.train.latest_checkpoint(args['modelpath'])
-    #    print("Restoring model %s.",last_model)
-    #    model_saver.restore(sess,last_model)
+    if args['resume']:
+        last_model = tf.train.latest_checkpoint(args['modelpath'])
+        print("Restoring model %s.",last_model)
+        model_saver.restore(sess,last_model)
 
     #broadcast the model
     sess.run(bcast_hook.bcast)
@@ -410,7 +409,7 @@ print("Stopping after %d global steps"%(args["last_step"]))
 metafilelist = [args['modelpath']+'/'+x for x in os.listdir(args['modelpath']) if x.endswith('.meta')]
 if not metafilelist:
     #no model found, restart from scratch
-    args['restart']=True
+    args['resume'] = False
 
 
 #initialize session
