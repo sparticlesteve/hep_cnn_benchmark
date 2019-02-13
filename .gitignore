@@ -1,2 +1,2 @@
 *.pyc
-slurm*.out
+logs/hepcnn*.out

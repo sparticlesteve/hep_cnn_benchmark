@@ -2,7 +2,8 @@
 #SBATCH -q debug
 #SBATCH -C knl
 #SBATCH -t 30
-#SBATCH -J hep_train_tf
+#SBATCH -J hepcnn-crayml
+#SBATCH -o logs/%x-%j.out
 
 # Environment setup
 module load tensorflow/intel-1.6.0-py36
