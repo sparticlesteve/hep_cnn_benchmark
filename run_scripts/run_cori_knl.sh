@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -p regular
-#SBATCH -C knl,quad,cache
-#SBATCH -t 1:00:00
+#SBATCH -q debug
+#SBATCH -C knl
+#SBATCH -t 30
 #SBATCH -J hep_train_tf
 
 # Set up environment

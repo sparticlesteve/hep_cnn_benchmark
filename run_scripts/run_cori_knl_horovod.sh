@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -q debug
 #SBATCH -C knl
-#SBATCH -t 30:00
+#SBATCH -t 30
 #SBATCH -J hep_train_tf
 
 # Environment

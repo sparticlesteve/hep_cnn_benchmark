@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -q regular
+#SBATCH -q debug
 #SBATCH -C haswell
-#SBATCH -t 1:00:00
+#SBATCH -t 30
 #SBATCH -J hep_train_tf
 
 # Set up environment
