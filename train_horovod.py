@@ -104,7 +104,7 @@ def parse_arguments():
 
     #modify the optimizers
     args['opt_args'] = {"learning_rate": args['learning_rate']}
-    elif args['optimizer'] == 'ADAM':
+    if args['optimizer'] == 'ADAM':
         args['opt_func'] = tf.train.AdamOptimizer
     else:
         raise ValueError('Only ADAM is supported as optimizer')
