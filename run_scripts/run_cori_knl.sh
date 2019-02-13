@@ -6,7 +6,6 @@
 
 # Set up environment
 module load tensorflow/intel-1.6.0-py36
-export PYTHONPATH=$PWD:$PYTHONPATH
 
 # Configure number of parameter servers
 if [ $SLURM_NNODES -ge 2 ]; then

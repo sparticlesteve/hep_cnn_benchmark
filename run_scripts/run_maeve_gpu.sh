@@ -1,8 +1,5 @@
 #!/bin/bash
 
-#run
-export PYTHONPATH=$PWD:$PYTHONPATH
-
 #set some parameters
 export CUDA_VISIBLE_DEVICES=0
 
