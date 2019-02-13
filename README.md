@@ -9,6 +9,16 @@ If you have questions about your rights to use or distribute this software, plea
 NOTICE. This Software was developed under funding from the U.S. Department of Energy and the U.S. Government consequently retains certain rights. As such, the U.S. Government has been granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable, worldwide license in the Software to reproduce, distribute copies to the public, prepare derivative works, and perform publicly and display publicly, and to permit other to do so.
 ****************************
 
+## Run the Cori benchmarks
+
+32-node benchmark with Horovod:
+
+`sbatch -N 32 run_scripts/run_cori_horovod.sh`
+
+32-node benchmark with the Cray PE ML plugin:
+
+`sbatch -N 32 run_scripts/run_cori_crayml.sh`
+
 ## Code Structure
 The main python training scripts are in the top level directory. These scripts do the command
 line parsing, set up distributed training, and call the training loop.
