@@ -10,11 +10,11 @@ NOTICE. This Software was developed under funding from the U.S. Department of En
 ****************************
 
 ## Code Structure
-The main python training scripts are in `scripts`. These scripts do the command
+The main python training scripts are in the top level directory. These scripts do the command
 line parsing, set up distributed training, and call the training loop.
-- `hep_classifier_tf_train.py` is for standard Tensorflow serial and distributed training.
-- `hep_classifier_tf_train_horovod.py` is for distributed Tensorflow training with Horovod.
-- `hep_classifier_tf_train_craype-ml.py` is for distributed Tensorflow training
+- `train.py` is for standard Tensorflow serial and distributed training.
+- `train_horovod.py` is for distributed Tensorflow training with Horovod.
+- `train_crayml.py` is for distributed Tensorflow training
    with the Cray ML plugin.
 
 The CNN classifier model is defined in `networks/binary_classifier_tf.py` along with
