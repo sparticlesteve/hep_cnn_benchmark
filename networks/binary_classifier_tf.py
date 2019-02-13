@@ -41,18 +41,15 @@
 #-------------------------------------------------------------------------------
 
 
-#os stuff
+# System
 import os
-import h5py as h5
 
-#numpy
+# Externals
+import h5py as h5
 import numpy as np
 from numpy.random import RandomState as rng
-
-#tensorflow
 import tensorflow as tf
 import tensorflow.contrib.keras as tfk
-
 
 # General Functions
 
