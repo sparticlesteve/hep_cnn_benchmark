@@ -253,9 +253,6 @@ def build_cnn_model(args):
     
     #create graph handle
     args['graph'] = tf.Graph()
-    #KFAC stuff
-    if args["optimizer"] == "KFAC":
-        args["opt_args"]["layer_collection"] = tf.contrib.kfac.layer_collection.LayerCollection()
     
     with args['graph'].as_default():
     
@@ -332,11 +329,6 @@ def build_cnn_model(args):
                 else:
                     print("Warning: bias-add currently snot supported for fp16!")
                 
-                if args["optimizer"] == "KFAC":
-                    args["opt_args"]["layer_collection"].register_conv2d((variables['conv'+str(layerid)+'_w'],variables['conv'+str(layerid)+'_b']), 
-                                                                        [1, 1, 1, 1], padding, network[-3],network[-1])
-                    
-                    
         
             #add relu unit
             #with tf.device(device):
@@ -386,10 +378,6 @@ def build_cnn_model(args):
             else:
                 print("Warning: bias-add currently snot supported for fp16!")
             
-            if args["optimizer"] == "KFAC":
-                args["opt_args"]["layer_collection"].register_conv2d((variables['conv'+str(layerid+1)+'_w'],variables['conv'+str(layerid+1)+'_b']), 
-                                                                    [1, 1, 1, 1], padding, network[-3],network[-1])
-            
             #add relu unit
             #with tf.device(device):
             network.append(activation(network[-1]))
@@ -422,9 +410,6 @@ def build_cnn_model(args):
             variables['fc1_w']=tf.Variable(initializer([outsize, args['num_fc_units']],dtype=dtype),name='fc1_w',dtype=dtype)
             variables['fc1_b']=tf.Variable(tf.zeros([args['num_fc_units']],dtype=dtype),name='fc1_b',dtype=dtype)
             network.append(tf.matmul(network[-1], variables['fc1_w']) + variables['fc1_b'])
-            if args["optimizer"] == "KFAC":
-                args["opt_args"]["layer_collection"].register_fully_connected((variables['fc1_w'],variables['fc1_b']), 
-                                                                              network[-2], network[-1])
     
             #add relu unit
             #with tf.device(device):
@@ -440,9 +425,6 @@ def build_cnn_model(args):
             variables['fc2_w']=tf.Variable(initializer([args['num_fc_units'],2],dtype=dtype),name='fc2_w',dtype=dtype)
             variables['fc2_b']=tf.Variable(tf.zeros([2],dtype=dtype),name='fc2_b',dtype=dtype)
             network.append(tf.matmul(network[-1], variables['fc2_w']) + variables['fc2_b'])
-            if args["optimizer"] == "KFAC":
-                args["opt_args"]["layer_collection"].register_fully_connected((variables['fc2_w'],variables['fc2_b']), 
-                                                                              network[-2], network[-1])
             
         else:
             #only one FC layer here
@@ -450,13 +432,6 @@ def build_cnn_model(args):
             variables['fc1_w']=tf.Variable(initializer([outsize,2],dtype=dtype),name='fc1_w',dtype=dtype)
             variables['fc1_b']=tf.Variable(tf.zeros([2],dtype=dtype),name='fc1_b',dtype=dtype)
             network.append(tf.matmul(network[-1], variables['fc1_w']) + variables['fc1_b'])
-            if args["optimizer"] == "KFAC":
-                args["opt_args"]["layer_collection"].register_fully_connected((variables['fc1_w'],variables['fc1_b']), 
-                                                                              network[-2], network[-1])
-        
-        #register logits for KFAC:
-        if args["optimizer"] == "KFAC":
-            args["opt_args"]["layer_collection"].register_categorical_predictive_distribution(network[-1], name="logits")
         
         #add softmax
         #with tf.device(device):

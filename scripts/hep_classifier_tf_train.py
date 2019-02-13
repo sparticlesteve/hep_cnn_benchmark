@@ -101,15 +101,10 @@ def parse_arguments():
 
     #modify the optimizers
     args['opt_args'] = {"learning_rate": args['learning_rate']}
-    if args['optimizer'] == 'KFAC':
-        args['opt_func'] = tf.contrib.kfac.optimizer.KfacOptimizer
-        args['opt_args']['cov_ema_decay'] = args['cov_ema_decay']
-        args['opt_args']['damping'] = args['damping']
-        args['opt_args']['momentum'] = args['momentum']
-    elif args['optimizer'] == 'ADAM':
+    if args['optimizer'] == 'ADAM':
         args['opt_func'] = tf.train.AdamOptimizer
     else:
-        raise ValueError('Only ADAM and KFAC are supported as optimizers')
+        raise ValueError('Only ADAM is supported as optimizer')
 
     #now, see if all the paths are there
     args['logpath'] = args['outputpath']+'/logs'
