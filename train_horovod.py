@@ -299,8 +299,9 @@ else:
 if (args['node_type'] == 'worker'):
     #common stuff
     os.environ["KMP_BLOCKTIME"] = "1"
-    os.environ["KMP_SETTINGS"] = "1"
     os.environ["KMP_AFFINITY"]= "granularity=fine,compact,1,0"
+    if args['task_index'] == 0:
+        os.environ["KMP_SETTINGS"] = "1"
 
     #arch-specific stuff
     if args['arch']=='hsw':
