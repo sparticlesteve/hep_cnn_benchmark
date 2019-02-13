@@ -24,7 +24,7 @@ fi
 echo "Running training"
 
 set -x
-${runcommand} python scripts/hep_classifier_tf_train.py \
+${runcommand} python train.py \
     --config=configs/cori_haswell_224.json \
     --num_tasks=${SLURM_NNODES} \
     --num_ps=${NUM_PS}

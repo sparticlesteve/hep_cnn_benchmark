@@ -13,6 +13,6 @@ export PYTHONPATH=$PWD:$PYTHONPATH
 
 # Run the training
 srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} -c 272 -u \
-    python scripts/hep_classifier_tf_train_craype-ml.py \
+    python train_crayml.py \
     --config=configs/cori_knl_224.json \
     --num_tasks=${SLURM_NNODES}
