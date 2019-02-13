@@ -335,13 +335,6 @@ if args['node_type'] == 'worker':
     with tf.device(args['device']):
         variables, network = bc.build_cnn_model(args)
         variables, pred_fn, loss_fn, accuracy_fn, auc_fn = bc.build_functions(args,variables,network)
-        #variables, pred_fn, loss_fn = bc.build_functions(args,variables,network)
-        #tf.add_to_collection('pred_fn', pred_fn)
-        #tf.add_to_collection('loss_fn', loss_fn)
-        #tf.add_to_collection('accuracy_fn', accuracy_fn[0])
-        print("Variables for rank",args["task_index"],":",variables)
-        print("Network for rank",args["task_index"],":",network)
-
 
 # Setup Iterators
 
