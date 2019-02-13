@@ -63,6 +63,9 @@ import tensorflow.contrib.keras as tfk
 import slurm_tf_helper.setup_clusters as sc
 import networks.binary_classifier_tf as bc
 
+# Debugging
+#tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+
 # Useful Functions
 
 def parse_arguments():

@@ -64,7 +64,7 @@ import horovod.tensorflow as hvd
 import slurm_tf_helper.setup_clusters as sc
 import networks.binary_classifier_tf as bc
 
-#debugging
+# Debugging
 #tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 
 # Initialize Horovod
@@ -112,7 +112,7 @@ def parse_arguments():
     elif args['optimizer'] == 'ADAM':
         args['opt_func'] = tf.train.AdamOptimizer
     else:
-        raise ValueError('Only ADAM and KFAC are supported as optimizer')
+        raise ValueError('Only ADAM and KFAC are supported as optimizers')
 
     #now, see if all the paths are there
     args['logpath'] = args['outputpath']+'/logs'
