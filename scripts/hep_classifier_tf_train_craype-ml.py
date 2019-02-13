@@ -407,9 +407,11 @@ if args['node_type'] == 'worker':
 #Determine stopping point, i.e. compute last_step:
 args["last_step"] = int(args["trainsamples"] * args["num_epochs"] / (args["train_batch_size_per_node"] * args["num_workers"]))
 
-#config the stopping criterion
-mc.config_team(0, 0, ksteps=np.max([int(args["fully_sync_fraction"]*args["last_step"]), 1]), 
-               max_steps=args["last_step"], verbosity=0, perf_freq=200)
+# Configure the cray plugin
+mc.config_team(0, 0,
+               ksteps=max(int(args["fully_sync_fraction"]*args["last_step"]), 1),
+               max_steps=args["last_step"],
+               verbosity=0, perf_freq=200)
 
 #print info
 print("Stopping after %d global steps"%(args["last_step"]))
