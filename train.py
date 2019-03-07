@@ -111,11 +111,11 @@ def parse_arguments():
     args['modelpath'] = args['outputpath']+'/models'
 
     if not os.path.isdir(args['logpath']):
-        print("Creating log directory ",args['logpath'])
-        os.makedirs(args['logpath'])
+        print("Creating log directory ", args['logpath'])
+        os.makedirs(args['logpath'], exist_ok=True)
     if not os.path.isdir(args['modelpath']):
-        print("Creating model directory ",args['modelpath'])
-        os.makedirs(args['modelpath'])
+        print("Creating model directory ", args['modelpath'])
+        os.makedirs(args['modelpath'], exist_ok=True)
     if not os.path.isdir(args['inputpath']) and not args['dummy_data']:
         raise ValueError("Please specify a valid path with input files in hdf5 format")
 
